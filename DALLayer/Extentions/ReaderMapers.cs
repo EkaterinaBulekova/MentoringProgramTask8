@@ -37,15 +37,11 @@ namespace DALLayer.Extentions
         {
             var item = Activator.CreateInstance<T>();
             var props = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var property in props)
-            {
-                for (var i = 0; i < reader.FieldCount; i++)
+            for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    if (reader.GetName(i) != property.Name) continue;
-                    if (!reader.IsDBNull(reader.GetOrdinal(property.Name)))
-                        property.SetValue(item, reader[property.Name]);
+                    var prop = props.FirstOrDefault(_ => reader.GetName(i) == _.Name && !reader.IsDBNull(reader.GetOrdinal(_.Name)));
+                    if (prop != null) prop.SetValue(item, reader[prop.Name]);
                 }
-            }
 
             return item;
         }

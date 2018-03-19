@@ -13,8 +13,8 @@ namespace DALLayer.Tests
     [TestClass]
     public class OrderRepositoryTests
     {
-        private static readonly IUnitOfWork Uow = new UnitOfWork(new DatabaseContextFactory());
-        private readonly IOrderRepository _repo = new OrderRepository(Uow);
+        private static IUnitOfWork _uow;
+        private IOrderRepository _repo;
         private readonly string _testString = "Test";
         private readonly string _testCustomerID = "ANATR";
         private readonly int _testOrderID = 11077;
@@ -27,7 +27,18 @@ namespace DALLayer.Tests
             ShipVia = 1
         };
 
+        [TestInitialize]
+        public void NorthwindTestInitialize()
+        {
+            _uow = new UnitOfWork(new DatabaseContextFactory());
+            _repo = new OrderRepository(_uow);
+        }
 
+        [TestCleanup]
+        public void NorthwindTestCleanup()
+        {
+            _uow.Dispose();
+        }
 
 
         [TestMethod]
@@ -94,16 +105,16 @@ namespace DALLayer.Tests
         public void CanInsertOrder()
         {
             var status = 0;
-            Uow.BeginTransaction();
+            _uow.BeginTransaction();
             try
             {
-                status = _repo.Insert(_testNewOrder, Uow.Transaction);
-                Uow.Commit();
+                status = _repo.Insert(_testNewOrder, _uow.Transaction);
+                _uow.Commit();
             }
             catch (Exception)
             {
-                Uow.Transaction.Rollback();
-                Uow.Dispose();
+                _uow.Transaction.Rollback();
+                _uow.Dispose();
             }
 
             var newOrder = _repo.GetAll().Last();
@@ -155,18 +166,18 @@ namespace DALLayer.Tests
         private int UpdateOrder(ref Order order)
         {
             var status = 0;
-            Uow.BeginTransaction();
+            _uow.BeginTransaction();
             try
             {
                 status = _repo.Update(
                     order,
-                    Uow.Transaction);
-                Uow.Commit();
+                    _uow.Transaction);
+                _uow.Commit();
             }
             catch (Exception)
             {
-                Uow.Transaction.Rollback();
-                Uow.Dispose();
+                _uow.Transaction.Rollback();
+                _uow.Dispose();
             }
 
             order = _repo.GetById(order.OrderID);
@@ -178,17 +189,17 @@ namespace DALLayer.Tests
         {
             var inWorkOrder = _repo.GetAll().FirstOrDefault(_ => _.Status == StatusType.InWork);
             var status = 0;
-            Uow.BeginTransaction();
+            _uow.BeginTransaction();
             try
             {
                 if (inWorkOrder != null)
-                    status = _repo.Delete(inWorkOrder.OrderID, Uow.Transaction);
-                Uow.Commit();
+                    status = _repo.Delete(inWorkOrder.OrderID, _uow.Transaction);
+                _uow.Commit();
             }
             catch (Exception)
             {
-                Uow.Transaction.Rollback();
-                Uow.Dispose();
+                _uow.Transaction.Rollback();
+                _uow.Dispose();
             }
 
             Assert.IsTrue(status > 0);
@@ -199,17 +210,17 @@ namespace DALLayer.Tests
         {
             var inWorkOrder = _repo.GetAll().FirstOrDefault(_ => _.Status == StatusType.Completed);
             var status = 0;
-            Uow.BeginTransaction();
+            _uow.BeginTransaction();
             try
             {
                 if (inWorkOrder != null)
-                    status = _repo.Delete(inWorkOrder.OrderID, Uow.Transaction);
-                Uow.Commit();
+                    status = _repo.Delete(inWorkOrder.OrderID, _uow.Transaction);
+                _uow.Commit();
             }
             catch (Exception)
             {
-                Uow.Transaction.Rollback();
-                Uow.Dispose();
+                _uow.Transaction.Rollback();
+                _uow.Dispose();
             }
 
             Assert.IsTrue(status == 0);
@@ -221,16 +232,16 @@ namespace DALLayer.Tests
             var order = _repo.GetAll().FirstOrDefault(_ => _.Status == StatusType.New);
             if (order == null) return;
             var status = 0;
-            Uow.BeginTransaction();
+            _uow.BeginTransaction();
             try
             {
-                status = _repo.UpdateOrderStatus(order.OrderID, Uow.Transaction, StatusType.InWork);
-                Uow.Commit();
+                status = _repo.UpdateOrderStatus(order.OrderID, _uow.Transaction, StatusType.InWork);
+                _uow.Commit();
             }
             catch (Exception)
             {
-                Uow.Transaction.Rollback();
-                Uow.Dispose();
+                _uow.Transaction.Rollback();
+                _uow.Dispose();
             }
 
             order = _repo.GetById(order.OrderID);
@@ -246,16 +257,16 @@ namespace DALLayer.Tests
             var order = _repo.GetAll().FirstOrDefault(_ => _.Status == StatusType.InWork);
             if (order == null) return;
             var status = 0;
-            Uow.BeginTransaction();
+            _uow.BeginTransaction();
             try
             {
-                status = _repo.UpdateOrderStatus(order.OrderID, Uow.Transaction, StatusType.Completed);
-                Uow.Commit();
+                status = _repo.UpdateOrderStatus(order.OrderID, _uow.Transaction, StatusType.Completed);
+                _uow.Commit();
             }
             catch (Exception)
             {
-                Uow.Transaction.Rollback();
-                Uow.Dispose();
+                _uow.Transaction.Rollback();
+                _uow.Dispose();
             }
 
             order = _repo.GetById(order.OrderID);
